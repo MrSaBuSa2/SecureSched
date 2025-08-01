@@ -1,0 +1,17 @@
+name: Hello World Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Hello ${{ github.actor }}
+        run: |
+          echo "Hello ${{ github.actor }}"
+          ls -al
