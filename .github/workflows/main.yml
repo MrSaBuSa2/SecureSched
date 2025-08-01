@@ -1,11 +1,13 @@
-name: Build FastAPI project
+name: CI Pipeline - SecureSched
 
 on:
   push:
     branches: [ main ]
+  pull_request:
 
 jobs:
-  build:
+  backend:
+    name: Backend tests
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -21,20 +23,51 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
           pip install -r backend/requirements.txt
+          pip install pytest
 
-      - name: Run tests
+      - name: Run backend tests
         run: |
-          echo "Tests would go here"
+          pytest backend/tests
+  frontend:
+    name: Frontend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run frontend tests
+        run: npm test -- --watchAll=false
+
+      - name: Build React app
+        run: npm run build
+  semgrep:
+    name: SAST with Semgrep
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: "p/default"
